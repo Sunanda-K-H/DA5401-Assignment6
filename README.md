@@ -1,96 +1,72 @@
-# DA5401-Assignment6
-
-**Name**: Kaki Hephzi Sunanda<br>
-**Roll Number**: DA25M015<br>
-**Date**: 04.09.2025<br>
-
----
-
-# Repository Information
-This repository contains the code for applying **Principal Component Analysis (PCA)** and **Logistic Regression** to the UCI Mushroom dataset.  
-The assignment demonstrates how categorical features can be transformed, reduced in dimensionality, and evaluated for class separability.  
-
----
-
-# Repository Structure
-
-```
-📦 assignment-2-Sunanda-K-H
-├─ README.md
-└─ DA5401_A2_DA25M015.ipynb
-└─ plots/
-```
 
 ---
 
 # Dataset Information
 
-- The dataset is the Mushroom dataset from the UCI Machine Learning Repository.
-- It contains 8,124 rows and 23 attributes (including target `class`) describing physical characteristics of mushrooms.
-- Each row represents a mushroom sample and includes attributes such as `cap-shape`, `cap-surface`, `cap-color`, `bruises`, `odor`, `gill-attachment`, `gill-size`, `gill-color`, `stalk-shape`, `stalk-root`, `stalk-surface`, `stalk-color`, `veil-type`, `veil-color`, `ring-number`, `ring-type`, `spore-print-color`, `population`, `habitat`.
-- Target variable: `class`
-  - e = edible
-  - p = poisonous
-- All features are categorical.
-- veil-type contains only one category.
-- `stalk-root` contains missing values represented by `?`.
-- Dataset is balanced:
-  - 51.8% edible (4208 samples).
-  - 48.2% poisonous (3916 samples).
+- Dataset: **Default of Credit Card Clients (Taiwan, 2005)**  
+- Total records: **30,000 clients**  
+- Number of variables: **25**
 
-![Class Distribution](https://github.com/DA5401-JUL-NOV-2025/assignment-2-Sunanda-K-H/blob/main/plots/class_dist.png)
+| Feature | Description |
+|----------|-------------|
+| ID | Unique identifier for each client |
+| LIMIT_BAL | Amount of given credit in NT dollars (includes individual and family/supplementary credit) |
+| SEX | Gender (1 = male, 2 = female) |
+| EDUCATION | (1 = graduate school, 2 = university, 3 = high school, 4 = others, 5–6 = unknown) |
+| MARRIAGE | Marital status (1 = married, 2 = single, 3 = others) |
+| AGE | Age in years |
+| PAY_0 – PAY_6 | Repayment status for April–September 2005 (-1 = pay duly, 1–9 = delay in months) |
+| BILL_AMT1 – BILL_AMT6 | Amount of bill statements (NT dollars) |
+| PAY_AMT1 – PAY_AMT6 | Amount of previous payments (NT dollars) |
+| default.payment.next.month | Default payment indicator (1 = yes, 0 = no) |
 
 ---
 
 # Work Done
-## 1. Exploratory Data Analysis & Preprocessing
-- Dataset contained categorical features only.
-- Applied One-Hot Encoding: expanded 22 features into 116 binary features.
-- Standardized features to ensured equal contribution to PCA.
 
-Observations:
-- `veil-type` feature had only one category, thus it was dropped (has zero variance).
-- `stalk-root` feature contained missing value marked as '?'. Instead of dropping, it was kept as a separate category since analysis showed it contributed variance.
-- Analysis on `stalk-root` feature:
-  - Heatmap of PCA loadings revealed that `?` had strong contributions to PC1 (0.5) & PC2 (0.7), as shown below.
-  - This showed that missing value was not random but actually informative.
+## 1. Exploratory Data Analysis & Understanding
+- Loaded the dataset and inspected feature names, datatypes, and summary statistics.  
+- Verified that there were **no explicit missing values**, but some undocumented codes were present in categorical columns.
+- Identified inconsistent or undefined category values such as:
+  - `MARRIAGE`: value `0` (undocumented)
+  - `EDUCATION`: values `0`, `5`, and `6`
+  - `PAY_0` to `PAY_6`: values `-2` and `0` (not matching the documentation)
 
-  ![Analysis - Missing Value](https://github.com/DA5401-JUL-NOV-2025/assignment-2-Sunanda-K-H/blob/main/plots/stalkroot.png)
+## 2. Data Cleaning
+- Created a clean copy of the dataset to preserve the original data.  
+- Replaced undocumented or unknown category values:
+  - `MARRIAGE`: 0 → 3 (Other)
+  - `EDUCATION`: {0, 5, 6} → 4 (Other)
+  - `PAY_*`: {0, -2} → -1 (Pay duly)
+- Verified the unique values post-cleaning to ensure consistency.
 
-## 2. PCA without restricting components
-- Ran PCA on standardized features with all components.
-- Generated Scree Plot and Cumulative Variance Plot.
-- Key finding: 59 components retained 95% of variance, reducing dimensionality significantly (116 to 59).
+**Observations:**
+- These replacements aligned all categorical variables with the official documentation.
+- The dataset retained its original shape (no rows were dropped).
+- Data consistency improved for modeling and interpretation.
 
-## 3. Class Separability in PCA Space
-- Scatter plots of the first 2–4 PCs showed edible and poisonous mushrooms forming distinct clusters.
-- Some overlap remained, but overall separation was strong.
+## 3. Handling Missing and Undocumented Values
+- Treated the undefined category codes as equivalent to missing values.
+- Encoded them appropriately during cleaning to maintain interpretability.
+- This approach allowed modeling without discarding potentially informative samples.
 
-![PC](https://github.com/DA5401-JUL-NOV-2025/assignment-2-Sunanda-K-H/blob/main/plots/pc12.png)
+## 4. Logistic Regression Model
+- Implemented **Logistic Regression** to predict the likelihood of default payment.
+- Target variable: `default.payment.next.month`
+- Data split into training and test sets (80–20).
+- Applied feature scaling to numerical variables for model stability.
+- Evaluated performance using metrics such as **Accuracy**, **Precision**, **Recall**, and **F1-score**.
 
-- Below is the Pairwise Scatter plot for 2-4 PCs.
-![PC14](https://github.com/DA5401-JUL-NOV-2025/assignment-2-Sunanda-K-H/blob/main/plots/pc14.png)
-
-
-## 3. PCA with Variance Thresholds
-- Tested thresholds: 85%, 90%, 95%, 99%.
-- Results:
-  - 42 PCs retained 85% variance.
-  - 50 PCs retained 90% variance.
-  - 59 PCs retained 95% variance.
-  - 72 PCs retained 99% variance.
- 
-## 4. Classification with Logistic Regression
-- Used Logistic Regression as a surrogate model to evaluate PCA-transformed data.
-- Results:
-  - With very few PCs, accuracy was low (~88%).
-  - Accuracy increased with more PCs and stabilized at 100% beyond ~30 PCs.
-  - At all variance thresholds (85–99%), perfect performance was observed.
-
-![accuracy](https://github.com/DA5401-JUL-NOV-2025/assignment-2-Sunanda-K-H/blob/main/plots/acc.png)
+**Results:**
+- Logistic Regression achieved reasonable predictive accuracy on the test set.
+- Default class imbalance was observed (fewer defaults than non-defaults), which was considered during interpretation.
+- Model coefficients showed strong relationships between repayment behavior (PAY_* variables) and the probability of default.
 
 ---
 
 # Conclusion
 
-This assignment demonstrated how PCA can reduce dimensionality without sacrificing accuracy. Logistic Regression was used as a surrogate performance measure, confirming that PCA created a feature space where classes are linearly separable.
+- The dataset contained no explicit null values but had undocumented category codes that required cleaning.  
+- After standardizing these values, Logistic Regression was successfully applied to model default probability.  
+- The analysis confirmed that **repayment status, credit limit, and past payment behavior** were the strongest predictors of default.  
+- Data cleaning played a critical role in ensuring valid and interpretable modeling outcomes.
